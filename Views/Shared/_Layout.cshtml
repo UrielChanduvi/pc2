@@ -41,6 +41,10 @@
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; 2025 - PortalInmobiliario - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            @if (Context.Session.GetString("UltimoInmuebleId") != null && Context.Session.GetString("UltimoInmuebleTitulo") != null)
+            {
+                <span> | <a asp-controller="Catalogo" asp-action="Detalle" asp-route-id="@Context.Session.GetString(\"UltimoInmuebleId\")">Volver a @Context.Session.GetString("UltimoInmuebleTitulo")</a></span>
+            }
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
