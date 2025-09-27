@@ -1,80 +1,19 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Distributed;
-    private readonly IDistributedCache _cache;
-    public CatalogoController(ApplicationDbContext context, IDistributedCache cache)
-    {
-        _context = context;
-        _cache = cache;
-    }
-    [HttpPost]
-    public async Task<IActionResult> ReservarAhora(int InmuebleId)
-    {
-        // Validar usuario autenticado
-        if (!User.Identity?.IsAuthenticated ?? true)
-        {
-            TempData["Error"] = "Debes iniciar sesión para reservar.";
-            return RedirectToAction("Detalle", new { id = InmuebleId });
-        }
+using PortalInmobiliario.Data;
 
-        // Validar reserva activa
-        var reservaActiva = await _context.Reservas.AnyAsync(r => r.InmuebleId == InmuebleId && r.FechaExpiracion > DateTime.Now);
-        if (reservaActiva)
-        {
-            TempData["Error"] = "Ya existe una reserva activa para este inmueble.";
-            return RedirectToAction("Detalle", new { id = InmuebleId });
-        }
-
-        // Crear reserva por 48h
-        var reserva = new PortalInmobiliario.Models.Reserva
-        {
-            InmuebleId = InmuebleId,
-            UsuarioId = User.Identity?.Name ?? "",
-            FechaCreacion = DateTime.Now,
-            FechaExpiracion = DateTime.Now.AddHours(48)
-        };
-        _context.Reservas.Add(reserva);
-        await _context.SaveChangesAsync();
-        // Invalidar caché de inmuebles activos
-        await InvalidarCacheInmuebles();
-        TempData["Success"] = "Reserva creada por 48 horas.";
-        return RedirectToAction("Detalle", new { id = InmuebleId });
-    }
-    [HttpPost]
-    public async Task<IActionResult> AgendarVisita(int InmuebleId, DateTime FechaInicio, DateTime FechaFin, string? Notas)
-    {
-        // Validar usuario autenticado
-        if (!User.Identity?.IsAuthenticated ?? true)
-        {
-            TempData["Error"] = "Debes iniciar sesión para agendar una visita.";
-            return RedirectToAction("Detalle", new { id = InmuebleId });
-        }
-
-        // Validar fechas
-        if (FechaInicio >= FechaFin)
-        {
-            TempData["Error"] = "La fecha de inicio debe ser menor que la fecha de fin.";
-            return RedirectToAction("Detalle", new { id = InmuebleId });
-        }
-
-        // Validar horario laboral (08:00–19:00)
-        if (FechaInicio.Hour < 8 || FechaFin.Hour > 19)
-        {
-            TempData["Error"] = "Las visitas solo pueden agendarse entre 08:00 y 19:00.";
-            return RedirectToAction("Detalle", new { id = InmuebleId });
-        }
-
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.AspNetCore.Http;
-    using PortalInmobiliario.Data;
-
-    namespace PortalInmobiliario.Controllers;
-
+namespace PortalInmobiliario.Controllers
+{
     public class CatalogoController : Controller
     {
         private readonly ApplicationDbContext _context;
-        public CatalogoController(ApplicationDbContext context)
+        private readonly IDistributedCache _cache;
+        public CatalogoController(ApplicationDbContext context, IDistributedCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         public async Task<IActionResult> Index(string? ciudad, TipoInmueble? tipo, decimal? precioMin, decimal? precioMax, int? dormitorios, int page = 1, int pageSize = 5)

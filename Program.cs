@@ -57,13 +57,33 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.UseSession();
-    .WithStaticAssets();
 
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
+
+// Inicializar datos de ejemplo
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<PortalInmobiliario.Data.ApplicationDbContext>();
+    PortalInmobiliario.Data.DbInitializer.Seed(context);
+
+    // Crear rol Broker si no existe
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    if (!roleManager.RoleExistsAsync("Broker").Result)
+    {
+        roleManager.CreateAsync(new IdentityRole("Broker")).Wait();
+    }
+    // Asignar rol Broker a un usuario demo (puedes cambiar el email)
+    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+    var brokerUser = userManager.FindByEmailAsync("broker@demo.com").Result;
+    if (brokerUser != null && !userManager.IsInRoleAsync(brokerUser, "Broker").Result)
+    {
+        userManager.AddToRoleAsync(brokerUser, "Broker").Wait();
+    }
+}
 
 app.Run();
 
