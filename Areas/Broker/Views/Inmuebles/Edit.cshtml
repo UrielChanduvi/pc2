@@ -1,0 +1,36 @@
+@model PortalInmobiliario.Models.Inmueble
+@{
+    ViewData["Title"] = "Editar Inmueble";
+}
+<h2>Editar Inmueble</h2>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="form-group">
+        <label asp-for="Titulo"></label>
+        <input asp-for="Titulo" class="form-control" />
+        <span asp-validation-for="Titulo" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Tipo"></label>
+        <select asp-for="Tipo" class="form-control">
+            <option value="Departamento">Departamento</option>
+            <option value="Casa">Casa</option>
+            <option value="Oficina">Oficina</option>
+            <option value="Local">Local</option>
+        </select>
+        <span asp-validation-for="Tipo" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Ciudad"></label>
+        <input asp-for="Ciudad" class="form-control" />
+        <span asp-validation-for="Ciudad" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Precio"></label>
+        <input asp-for="Precio" class="form-control" />
+        <span asp-validation-for="Precio" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+</form>
