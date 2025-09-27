@@ -32,7 +32,8 @@
                 <option value="">Todos</option>
                 @foreach (var tipo in Enum.GetValues(typeof(PortalInmobiliario.Models.TipoInmueble)))
                 {
-                    <option value="@tipo" @(ViewBag.Tipo?.ToString() == tipo.ToString() ? "selected" : "")>@tipo</option>
+                    var tipoStr = tipo.ToString();
+                    <option value="@tipoStr" @(ViewBag.Tipo?.ToString() == tipoStr ? "selected" : "")>@tipoStr</option>
                 }
             </select>
         </div>
