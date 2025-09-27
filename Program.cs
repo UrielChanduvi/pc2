@@ -4,11 +4,14 @@ using PortalInmobiliario.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración de Redis y sesiones
+// ✅ Configuración de Redis y sesiones
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379";
+    // Si existe la variable de entorno la usa, si no, usa localhost para dev
+    options.Configuration = builder.Configuration["REDIS_CONNECTION_STRING"] ?? "localhost:6379";
+    options.InstanceName = "PortalInmobiliario:"; 
 });
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -25,7 +28,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// ✅ Cambiado a AddIdentity para soportar roles
+// ✅ Identity con roles
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
@@ -35,7 +38,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-
 
 var app = builder.Build();
 
@@ -62,16 +64,16 @@ app.UseStatusCodePages(async context =>
 app.UseHttpsRedirection();
 app.UseRouting();
 
-app.UseAuthentication(); // ✅ Agregado para que funcione Identity
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseSession(); // ✅ mover antes de MapRazorPages para que se aplique bien
 
 app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.UseSession();
 
 app.MapRazorPages();
 
