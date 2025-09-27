@@ -3,6 +3,14 @@
     ViewData["Title"] = "Detalle de Inmueble";
 }
 <h2>@ViewData["Title"]</h2>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
 <div class="card mb-3">
     <div class="card-body">
         <h4>@Model.Titulo</h4>
@@ -15,6 +23,36 @@
         <p><strong>Metros²:</strong> @Model.MetrosCuadrados</p>
         <p><strong>Precio:</strong> @Model.Precio.ToString("C")</p>
         <a asp-action="Index" class="btn btn-secondary">Volver al catálogo</a>
-        <a asp-action="AgendarVisita" asp-route-id="@Model.Id" class="btn btn-primary ms-2">Agendar visita</a>
+        @if (!(ViewBag.ReservaActiva ?? false))
+        {
+            <form asp-action="ReservarAhora" method="post" class="d-inline">
+                <input type="hidden" name="InmuebleId" value="@Model.Id" />
+                <button type="submit" class="btn btn-warning ms-2">Reservar ahora (48h)</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5>Agendar visita</h5>
+        <form asp-action="AgendarVisita" method="post">
+            <input type="hidden" name="InmuebleId" value="@Model.Id" />
+            <div class="mb-2">
+                <label>Fecha Inicio</label>
+                <input type="datetime-local" name="FechaInicio" class="form-control" required />
+            </div>
+            <div class="mb-2">
+                <label>Fecha Fin</label>
+                <input type="datetime-local" name="FechaFin" class="form-control" required />
+            </div>
+            <div class="mb-2">
+                <label>Notas</label>
+                <textarea name="Notas" class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Agendar visita</button>
+        </form>
+    </div>
+</div>
     </div>
 </div>
