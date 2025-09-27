@@ -182,36 +182,6 @@ namespace PortalInmobiliario.Controllers
             await _cache.RemoveAsync("inmuebles::::::1:5");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ReservarAhora(int InmuebleId)
-        {
-            // Validar usuario autenticado
-            if (!User.Identity?.IsAuthenticated ?? true)
-            {
-                TempData["Error"] = "Debes iniciar sesión para reservar.";
-                return RedirectToAction("Detalle", new { id = InmuebleId });
-            }
-
-            // Validar reserva activa
-            var reservaActiva = await _context.Reservas.AnyAsync(r => r.InmuebleId == InmuebleId && r.FechaExpiracion > DateTime.Now);
-            if (reservaActiva)
-            {
-                TempData["Error"] = "Ya existe una reserva activa para este inmueble.";
-                return RedirectToAction("Detalle", new { id = InmuebleId });
-            }
-
-            // Crear reserva por 48h
-            var reserva = new PortalInmobiliario.Models.Reserva
-            {
-                InmuebleId = InmuebleId,
-                UsuarioId = User.Identity?.Name ?? "",
-                FechaCreacion = DateTime.Now,
-                FechaExpiracion = DateTime.Now.AddHours(48)
-            };
-            _context.Reservas.Add(reserva);
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Reserva creada por 48 horas.";
-            return RedirectToAction("Detalle", new { id = InmuebleId });
-        }
     }
+        {
 
