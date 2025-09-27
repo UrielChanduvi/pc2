@@ -19,51 +19,14 @@ namespace PortalInmobiliario.Controllers
 
         public async Task<IActionResult> Index(string? ciudad, TipoInmueble? tipo, decimal? precioMin, decimal? precioMax, int? dormitorios, int page = 1, int pageSize = 5)
         {
-                // Clave compuesta por filtros
-                string cacheKey = $"inmuebles:{ciudad}:{tipo}:{precioMin}:{precioMax}:{dormitorios}:{page}:{pageSize}";
-                var cached = await _cache.GetStringAsync(cacheKey);
-                List<PortalInmobiliario.Models.Inmueble>? inmuebles = null;
-                int totalItems = 0;
-                if (cached != null)
-                {
-                    inmuebles = System.Text.Json.JsonSerializer.Deserialize<List<PortalInmobiliario.Models.Inmueble>>(cached);
-                    totalItems = inmuebles?.Count ?? 0;
-                }
-                else
-                {
-                    var query = _context.Inmuebles.Where(i => i.Activo);
-                    List<string> errors = new();
-                    if (precioMin.HasValue && precioMin < 0)
-                        errors.Add("Precio mínimo no puede ser negativo.");
-                    if (precioMax.HasValue && precioMax < 0)
-                        errors.Add("Precio máximo no puede ser negativo.");
-                    if (precioMin.HasValue && precioMax.HasValue && precioMin > precioMax)
-                        errors.Add("Precio mínimo no puede ser mayor que el máximo.");
-                    if (dormitorios.HasValue && dormitorios < 0)
-                        errors.Add("Dormitorios no puede ser negativo.");
-                    if (!string.IsNullOrEmpty(ciudad))
-                        query = query.Where(i => i.Ciudad == ciudad);
-                    if (tipo.HasValue)
-                        query = query.Where(i => i.Tipo == tipo);
-                    if (precioMin.HasValue && precioMin >= 0)
-                        query = query.Where(i => i.Precio >= precioMin);
-                    if (precioMax.HasValue && precioMax >= 0)
-                        query = query.Where(i => i.Precio <= precioMax);
-                    if (dormitorios.HasValue && dormitorios >= 0)
-                        query = query.Where(i => i.Dormitorios >= dormitorios);
-                    totalItems = await query.CountAsync();
-                    inmuebles = await query
-                        .OrderBy(i => i.Id)
-                        .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
-                        .ToListAsync();
-                    var json = System.Text.Json.JsonSerializer.Serialize(inmuebles);
-                    await _cache.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60) });
-                    ViewBag.Errors = errors;
-                }
-            var query = _context.Inmuebles.Where(i => i.Activo);
-
+            // Clave compuesta por filtros para caché Redis
+            string cacheKey = $"inmuebles:{ciudad}:{tipo}:{precioMin}:{precioMax}:{dormitorios}:{page}:{pageSize}";
+            var cached = await _cache.GetStringAsync(cacheKey);
+            List<PortalInmobiliario.Models.Inmueble>? inmuebles = null;
+            int totalItems = 0;
             List<string> errors = new();
+            var query = _context.Inmuebles.Where(i => i.Activo);
+            // Validaciones server-side
             if (precioMin.HasValue && precioMin < 0)
                 errors.Add("Precio mínimo no puede ser negativo.");
             if (precioMax.HasValue && precioMax < 0)
@@ -72,7 +35,6 @@ namespace PortalInmobiliario.Controllers
                 errors.Add("Precio mínimo no puede ser mayor que el máximo.");
             if (dormitorios.HasValue && dormitorios < 0)
                 errors.Add("Dormitorios no puede ser negativo.");
-
             if (!string.IsNullOrEmpty(ciudad))
                 query = query.Where(i => i.Ciudad == ciudad);
             if (tipo.HasValue)
@@ -84,29 +46,39 @@ namespace PortalInmobiliario.Controllers
             if (dormitorios.HasValue && dormitorios >= 0)
                 query = query.Where(i => i.Dormitorios >= dormitorios);
 
-            var totalItems = await query.CountAsync();
-            var inmuebles = await query
-                .OrderBy(i => i.Id)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-        ViewBag.Ciudad = ciudad;
-        ViewBag.Tipo = tipo;
-        ViewBag.PrecioMin = precioMin;
-        ViewBag.PrecioMax = precioMax;
-        ViewBag.Dormitorios = dormitorios;
-        ViewBag.Ciudades = await _context.Inmuebles.Select(i => i.Ciudad).Distinct().ToListAsync();
-        ViewBag.Page = page;
-        ViewBag.PageSize = pageSize;
-        ViewBag.TotalItems = totalItems;
-        // Guardar filtros en sesión
-        HttpContext.Session.SetString("FiltroCiudad", ciudad ?? "");
-        HttpContext.Session.SetString("FiltroTipo", tipo?.ToString() ?? "");
-        HttpContext.Session.SetString("FiltroPrecioMin", precioMin?.ToString() ?? "");
-        HttpContext.Session.SetString("FiltroPrecioMax", precioMax?.ToString() ?? "");
-        HttpContext.Session.SetString("FiltroDormitorios", dormitorios?.ToString() ?? "");
-        return View(inmuebles);
+            if (cached != null)
+            {
+                inmuebles = System.Text.Json.JsonSerializer.Deserialize<List<PortalInmobiliario.Models.Inmueble>>(cached);
+                totalItems = inmuebles?.Count ?? 0;
+            }
+            else
+            {
+                totalItems = await query.CountAsync();
+                inmuebles = await query
+                    .OrderBy(i => i.Id)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+                var json = System.Text.Json.JsonSerializer.Serialize(inmuebles);
+                await _cache.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60) });
+            }
+            ViewBag.Errors = errors;
+            ViewBag.Ciudad = ciudad;
+            ViewBag.Tipo = tipo;
+            ViewBag.PrecioMin = precioMin;
+            ViewBag.PrecioMax = precioMax;
+            ViewBag.Dormitorios = dormitorios;
+            ViewBag.Ciudades = await _context.Inmuebles.Select(i => i.Ciudad).Distinct().ToListAsync();
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
+            // Guardar filtros en sesión
+            HttpContext.Session.SetString("FiltroCiudad", ciudad ?? "");
+            HttpContext.Session.SetString("FiltroTipo", tipo?.ToString() ?? "");
+            HttpContext.Session.SetString("FiltroPrecioMin", precioMin?.ToString() ?? "");
+            HttpContext.Session.SetString("FiltroPrecioMax", precioMax?.ToString() ?? "");
+            HttpContext.Session.SetString("FiltroDormitorios", dormitorios?.ToString() ?? "");
+            return View(inmuebles);
         }
 
         public async Task<IActionResult> Detalle(int id)
@@ -183,5 +155,4 @@ namespace PortalInmobiliario.Controllers
         }
 
     }
-        {
 
