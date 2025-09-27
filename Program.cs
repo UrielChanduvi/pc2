@@ -44,3 +44,11 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
+// Inicializar datos de ejemplo
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<PortalInmobiliario.Data.ApplicationDbContext>();
+    PortalInmobiliario.Data.DbInitializer.Seed(context);
+}
