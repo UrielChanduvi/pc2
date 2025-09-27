@@ -22,8 +22,7 @@
                 <option value="">Todas</option>
                 @foreach (var ciudad in (List<string>)ViewBag.Ciudades)
                 {
-                    var selected = (ViewBag.Ciudad == ciudad) ? "selected" : "";
-                    <option value="@ciudad" @(selected == "selected" ? "selected=\"selected\"" : "")>@ciudad</option>
+                    <option value="@ciudad" selected="@(ViewBag.Ciudad == ciudad ? "selected" : null)">@ciudad</option>
                 }
             </select>
         </div>
@@ -34,8 +33,7 @@
                 @foreach (var tipo in Enum.GetValues(typeof(PortalInmobiliario.Models.TipoInmueble)))
                 {
                     var tipoStr = tipo.ToString();
-                    var selected = (ViewBag.Tipo?.ToString() == tipoStr) ? "selected" : "";
-                    <option value="@tipoStr" @(selected == "selected" ? "selected=\"selected\"" : "")>@tipoStr</option>
+                    <option value="@tipoStr" selected="@(ViewBag.Tipo?.ToString() == tipoStr ? "selected" : null)">@tipoStr</option>
                 }
             </select>
         </div>
@@ -111,3 +109,4 @@
         </li>
     </ul>
 </nav>
+
