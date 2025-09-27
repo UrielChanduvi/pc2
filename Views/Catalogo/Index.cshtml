@@ -1,0 +1,110 @@
+@model IEnumerable<PortalInmobiliario.Models.Inmueble>
+@{
+    ViewData["Title"] = "Catálogo de Inmuebles";
+}
+<h2>@ViewData["Title"]</h2>
+@if (ViewBag.Errors != null && ((List<string>)ViewBag.Errors).Count > 0)
+{
+    <div class="alert alert-danger">
+        <ul>
+        @foreach (var error in (List<string>)ViewBag.Errors)
+        {
+            <li>@error</li>
+        }
+        </ul>
+    </div>
+}
+<form method="get" class="mb-3">
+    <div class="row">
+        <div class="col-md-2">
+            <label>Ciudad</label>
+            <select name="ciudad" class="form-control">
+                <option value="">Todas</option>
+                @foreach (var ciudad in (List<string>)ViewBag.Ciudades)
+                {
+                    <option value="@ciudad" @(ViewBag.Ciudad == ciudad ? "selected" : "")>@ciudad</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Tipo</label>
+            <select name="tipo" class="form-control">
+                <option value="">Todos</option>
+                @foreach (var tipo in Enum.GetValues(typeof(PortalInmobiliario.Models.TipoInmueble)))
+                {
+                    <option value="@tipo" @(ViewBag.Tipo?.ToString() == tipo.ToString() ? "selected" : "")>@tipo</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Precio Min</label>
+            <input type="number" name="precioMin" class="form-control" value="@ViewBag.PrecioMin" min="0" />
+        </div>
+        <div class="col-md-2">
+            <label>Precio Max</label>
+            <input type="number" name="precioMax" class="form-control" value="@ViewBag.PrecioMax" min="0" />
+        </div>
+        <div class="col-md-2">
+            <label>Dormitorios >=</label>
+            <input type="number" name="dormitorios" class="form-control" value="@ViewBag.Dormitorios" min="0" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+        </div>
+    </div>
+</form>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Título</th>
+            <th>Tipo</th>
+            <th>Ciudad</th>
+            <th>Dirección</th>
+            <th>Dormitorios</th>
+            <th>Baños</th>
+            <th>Metros²</th>
+            <th>Precio</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var inmueble in Model)
+        {
+            <tr>
+                <td>@inmueble.Codigo</td>
+                <td>
+                    <a asp-action="Detalle" asp-route-id="@inmueble.Id">@inmueble.Titulo</a>
+                </td>
+                <td>@inmueble.Tipo</td>
+                <td>@inmueble.Ciudad</td>
+                <td>@inmueble.Direccion</td>
+                <td>@inmueble.Dormitorios</td>
+                <td>@inmueble.Banos</td>
+                <td>@inmueble.MetrosCuadrados</td>
+                <td>@inmueble.Precio.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<nav aria-label="Paginación">
+    <ul class="pagination justify-content-center">
+        @{
+            int page = ViewBag.Page ?? 1;
+            int pageSize = ViewBag.PageSize ?? 5;
+            int totalItems = ViewBag.TotalItems ?? 0;
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+        }
+        <li class="page-item @(page == 1 ? "disabled" : "")">
+            <a class="page-link" href="@Url.Action(null, new { ciudad = ViewBag.Ciudad, tipo = ViewBag.Tipo, precioMin = ViewBag.PrecioMin, precioMax = ViewBag.PrecioMax, dormitorios = ViewBag.Dormitorios, page = page - 1, pageSize = pageSize })">Anterior</a>
+        </li>
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == page ? "active" : "")">
+                <a class="page-link" href="@Url.Action(null, new { ciudad = ViewBag.Ciudad, tipo = ViewBag.Tipo, precioMin = ViewBag.PrecioMin, precioMax = ViewBag.PrecioMax, dormitorios = ViewBag.Dormitorios, page = i, pageSize = pageSize })">@i</a>
+            </li>
+        }
+        <li class="page-item @(page == totalPages ? "disabled" : "")">
+            <a class="page-link" href="@Url.Action(null, new { ciudad = ViewBag.Ciudad, tipo = ViewBag.Tipo, precioMin = ViewBag.PrecioMin, precioMax = ViewBag.PrecioMax, dormitorios = ViewBag.Dormitorios, page = page + 1, pageSize = pageSize })">Siguiente</a>
+        </li>
+    </ul>
+</nav>
