@@ -1,0 +1,20 @@
+@model PortalInmobiliario.Models.Inmueble
+@{
+    ViewData["Title"] = "Detalle de Inmueble";
+}
+<h2>@ViewData["Title"]</h2>
+<div class="card mb-3">
+    <div class="card-body">
+        <h4>@Model.Titulo</h4>
+        <p><strong>Código:</strong> @Model.Codigo</p>
+        <p><strong>Tipo:</strong> @Model.Tipo</p>
+        <p><strong>Ciudad:</strong> @Model.Ciudad</p>
+        <p><strong>Dirección:</strong> @Model.Direccion</p>
+        <p><strong>Dormitorios:</strong> @Model.Dormitorios</p>
+        <p><strong>Baños:</strong> @Model.Banos</p>
+        <p><strong>Metros²:</strong> @Model.MetrosCuadrados</p>
+        <p><strong>Precio:</strong> @Model.Precio.ToString("C")</p>
+        <a asp-action="Index" class="btn btn-secondary">Volver al catálogo</a>
+        <a asp-action="AgendarVisita" asp-route-id="@Model.Id" class="btn btn-primary ms-2">Agendar visita</a>
+    </div>
+</div>
