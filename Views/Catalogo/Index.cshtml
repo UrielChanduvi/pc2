@@ -22,7 +22,8 @@
                 <option value="">Todas</option>
                 @foreach (var ciudad in (List<string>)ViewBag.Ciudades)
                 {
-                    <option value="@ciudad" @(ViewBag.Ciudad == ciudad ? "selected" : "")>@ciudad</option>
+                    var selected = (ViewBag.Ciudad == ciudad) ? "selected" : "";
+                    <option value="@ciudad" @(selected == "selected" ? "selected=\"selected\"" : "")>@ciudad</option>
                 }
             </select>
         </div>
@@ -34,7 +35,7 @@
                 {
                     var tipoStr = tipo.ToString();
                     var selected = (ViewBag.Tipo?.ToString() == tipoStr) ? "selected" : "";
-                <option value="@tipoStr" @selected>@tipoStr</option>
+                    <option value="@tipoStr" @(selected == "selected" ? "selected=\"selected\"" : "")>@tipoStr</option>
                 }
             </select>
         </div>
