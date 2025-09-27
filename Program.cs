@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
 using PortalInmobiliario.Data;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
 // Configuración de Redis y sesiones
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -18,13 +17,22 @@ builder.Services.AddSession(options =>
 });
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+// ✅ Cambiado a AddIdentity para soportar roles
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -37,7 +45,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -53,6 +60,7 @@ app.UseStatusCodePages(async context =>
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication(); // ✅ Agregado para que funcione Identity
 app.UseAuthorization();
 
 app.MapStaticAssets();
@@ -65,20 +73,19 @@ app.UseSession();
 
 app.MapRazorPages();
 
-// Inicializar datos de ejemplo
+// Inicializar datos de ejemplo (roles y usuario Broker demo)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<PortalInmobiliario.Data.ApplicationDbContext>();
-    PortalInmobiliario.Data.DbInitializer.Seed(context);
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    DbInitializer.Seed(context);
 
-    // Crear rol Broker si no existe
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     if (!roleManager.RoleExistsAsync("Broker").Result)
     {
         roleManager.CreateAsync(new IdentityRole("Broker")).Wait();
     }
-    // Asignar rol Broker a un usuario demo (puedes cambiar el email)
+
     var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
     var brokerUser = userManager.FindByEmailAsync("broker@demo.com").Result;
     if (brokerUser != null && !userManager.IsInRoleAsync(brokerUser, "Broker").Result)
@@ -88,25 +95,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-
-// Inicializar datos de ejemplo
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<PortalInmobiliario.Data.ApplicationDbContext>();
-    PortalInmobiliario.Data.DbInitializer.Seed(context);
-
-    // Crear rol Broker si no existe
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    if (!roleManager.RoleExistsAsync("Broker").Result)
-    {
-        roleManager.CreateAsync(new IdentityRole("Broker")).Wait();
-    }
-    // Asignar rol Broker a un usuario demo (puedes cambiar el email)
-    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-    var brokerUser = userManager.FindByEmailAsync("broker@demo.com").Result;
-    if (brokerUser != null && !userManager.IsInRoleAsync(brokerUser, "Broker").Result)
-    {
-        userManager.AddToRoleAsync(brokerUser, "Broker").Wait();
-    }
-}
