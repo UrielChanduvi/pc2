@@ -41,9 +41,13 @@
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; 2025 - PortalInmobiliario - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-            @if (Context.Session.GetString("UltimoInmuebleId") != null && Context.Session.GetString("UltimoInmuebleTitulo") != null)
+            @{
+                var id = Context.Session.GetString("UltimoInmuebleId");
+                var titulo = Context.Session.GetString("UltimoInmuebleTitulo");
+            }
+            @if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(titulo))
             {
-                <span> | <a asp-controller="Catalogo" asp-action="Detalle" asp-route-id="@Context.Session.GetString(\"UltimoInmuebleId\")">Volver a @Context.Session.GetString("UltimoInmuebleTitulo")</a></span>
+                <span> | <a asp-controller="Catalogo" asp-action="Detalle" asp-route-id="@id">Volver a @(titulo)</a></span>
             }
         </div>
     </footer>

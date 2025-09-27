@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+
 using Microsoft.Extensions.Caching.Distributed;
 using PortalInmobiliario.Data;
+using PortalInmobiliario.Models;
 
 namespace PortalInmobiliario.Controllers
 {
@@ -156,3 +158,4 @@ namespace PortalInmobiliario.Controllers
 
     }
 
+}

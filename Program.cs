@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
 using PortalInmobiliario.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 // Configuración de Redis y sesiones
